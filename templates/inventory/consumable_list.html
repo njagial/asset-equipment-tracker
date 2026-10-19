@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<form hx-get="{% url 'consumable-list' %}" hx-target="#consumable-rows" hx-trigger="input changed delay:300ms from:#q, change from:#low, submit" class="row g-2 align-items-end mb-3" id="consumable-filter-form">
+    <div class="col-md-4">
+        <input id="q" type="search" name="q" value="{{ search_term }}" class="form-control" placeholder="Search name, SKU, location…">
+    </div>
+    <div class="col-md-3 form-check ms-1">
+        <input id="low" type="checkbox" name="low" value="1" {% if low_only %}checked{% endif %} class="form-check-input">
+        <label class="form-check-label" for="low">Below threshold only</label>
+    </div>
+    <div class="col-md-2">
+        <a class="btn btn-primary" href="{% url 'consumable-create' %}">＋ New</a>
+    </div>
+</form>
+
+<div id="consumable-rows">
+    {% include "inventory/partials/consumable_rows.html" %}
+</div>
+{% endblock %}

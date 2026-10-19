@@ -1,0 +1,33 @@
+{% load static %}
+{% block content %}
+{# Fuzzy server-side search (tag, serial, location, name, barcode payload). #}
+<form hx-get="{% url 'asset-list' %}" hx-target="#asset-rows" hx-trigger="input changed delay:300ms from:#q, change from:#status, change from:#category, submit" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <input id="q" type="search" name="q" value="{{ search_term }}" class="form-control" placeholder="Search tag, serial, location, name…">
+    </div>
+    <div class="col-md-3">
+        <select id="status" name="status" class="form-select">
+            <option value="">All statuses</option>
+            {% for value, label in statuses %}
+                <option value="{{ value }}" {% if value == status %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select id="category" name="category" class="form-select">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == category_id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1">Filter</button>
+        <a class="btn btn-outline-secondary" href="{% url 'asset-create' %}">＋ New</a>
+    </div>
+</form>
+
+<div id="asset-rows">
+    {% include "inventory/partials/asset_rows.html" %}
+</div>
+{% endblock %}

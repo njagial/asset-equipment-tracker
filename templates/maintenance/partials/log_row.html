@@ -1,0 +1,19 @@
+<tr>
+    <td><span class="badge {% if log.status == 'COMPLETED' %}text-bg-success{% elif log.status == 'SCHEDULED' %}text-bg-secondary{% elif log.status == 'IN_PROGRESS' %}text-bg-warning{% else %}text-bg-danger{% endif %}">{{ log.get_status_display }}</span></td>
+    <td class="small">{{ log.get_maintenance_type_display }}</td>
+    <td>{{ log.title }}</td>
+    <td><a href="{% url 'asset-detail' log.asset.pk %}" class="font-monospace">{{ log.asset.asset_tag }}</a></td>
+    <td>{{ log.scheduled_date }}</td>
+    <td>{{ log.completed_date|default:"—" }}</td>
+    <td>{{ log.cost|default:"—" }}</td>
+    <td class="small">{{ log.performed_by.username|default:log.vendor|default:"—" }}</td>
+    <td class="text-end">
+        {% if log.status == 'SCHEDULED' or log.status == 'IN_PROGRESS' %}
+            <form hx-post="{% url 'maintenance-complete' log.pk %}" hx-target="closest tr" hx-swap="outerHTML" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-success">✔ Complete</button>
+            </form>
+        {% endif %}
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'maintenance-update' log.pk %}">Edit</a>
+    </td>
+</tr>

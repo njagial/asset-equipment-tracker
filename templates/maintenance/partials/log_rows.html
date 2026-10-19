@@ -1,0 +1,15 @@
+<div class="table-responsive">
+    <table class="table table-hover table-sm align-middle bg-white">
+        <thead class="table-dark">
+            <tr><th>Status</th><th>Type</th><th>Title</th><th>Asset</th><th>Scheduled</th><th>Completed</th><th>Cost</th><th>By</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for log in page_obj %}
+                {% include "maintenance/partials/log_row.html" %}
+            {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-4">No maintenance logs.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include "partials/pagination.html" %}

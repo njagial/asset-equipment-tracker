@@ -1,0 +1,38 @@
+{% if asset %}
+<div class="card">
+    <div class="card-body">
+        <h5><span class="font-monospace me-2">{{ asset.asset_tag }}</span>{{ asset.name }}</h5>
+        <p class="mb-2">
+            <span class="badge status-{{ asset.status|lower }}">{{ asset.get_status_display }}</span>
+            <span class="text-muted small">· {{ asset.category.name }} · {{ asset.location|default:"—" }}</span>
+        </p>
+        {% if asset.assigned_to_user %}<p class="mb-2 small">Assigned to <strong>{{ asset.assigned_to_user.username }}</strong></p>{% endif %}
+
+        {% if can_operate %}
+            {% if asset.status == "CHECKED_OUT" %}
+                <form hx-post="{% url 'asset-check-in' asset.pk %}" hx-target="#messages-slot" hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="mb-2">{{ checkin_form.new_location }}</div>
+                    <div class="mb-2">{{ checkin_form.notes }}</div>
+                    <button class="btn btn-primary w-100">↙ Check in</button>
+                </form>
+            {% elif asset.status == "AVAILABLE" %}
+                <form hx-post="{% url 'asset-check-out' asset.pk %}" hx-target="#messages-slot" hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="mb-2">{{ checkout_form.assigned_to }}</div>
+                    <div class="mb-2">{{ checkout_form.notes }}</div>
+                    <button class="btn btn-success w-100">↗ Check out</button>
+                </form>
+            {% else %}
+                <a class="btn btn-outline-secondary w-100" href="{% url 'asset-detail' asset.pk %}">Open asset page ({{ asset.get_status_display }})</a>
+            {% endif %}
+        {% else %}
+            <a class="btn btn-outline-primary w-100" href="{% url 'asset-detail' asset.pk %}">View details</a>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning mb-0">
+    No asset matches <span class="font-monospace">{{ code }}</span>.
+</div>
+{% endif %}

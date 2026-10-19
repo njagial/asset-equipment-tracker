@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Restock queue{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>⚠️ Restock queue <span class="text-muted fs-6">({{ below_threshold_count }} item{{ below_threshold_count|pluralize }} below threshold)</span></h5>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover table-sm align-middle bg-white">
+        <thead class="table-dark">
+            <tr><th>Item</th><th>SKU</th><th>Qty at trigger</th><th>Threshold</th><th>Triggered</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.consumable.name }}</td>
+                    <td class="font-monospace">{{ alert.consumable.sku }}</td>
+                    <td class="fw-bold text-danger">{{ alert.quantity_at_trigger }}</td>
+                    <td>{{ alert.threshold_at_trigger }}</td>
+                    <td class="small">{{ alert.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="text-end">
+                        <form hx-post="{% url 'restock-resolve' alert.pk %}" hx-target="#messages-slot" hx-swap="innerHTML" class="d-inline">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-success">✓ Restocked</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Nothing to restock — all above threshold 🎉</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

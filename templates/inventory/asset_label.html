@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Label · {{ asset.asset_tag }}</title>
+    <style>
+        /* Sized for common 2"x1" thermal labels (Dymo 30336 / Zebra). */
+        @page { size: 2in 1in; margin: 0.05in; }
+        html, body { margin: 0; padding: 0; }
+        .label { width: 1.9in; height: 0.9in; overflow: hidden; font-family: Arial, Helvetica, sans-serif; display: flex; align-items: center; }
+        .left { padding: 0.04in; }
+        .left img { width: 0.72in; height: 0.72in; }
+        .right { border-left: 1px dashed #999; padding: 0.05in; }
+        .right .tag { font-size: 11pt; font-weight: bold; white-space: nowrap; }
+        .right .name { font-size: 7pt; max-width: 1.05in; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .right .loc { font-size: 6.5pt; color: #333; white-space: nowrap; }
+        .right .barcode-slot svg { height: 0.22in; }
+    </style>
+</head>
+<body onload="window.print()">
+<div class="label">
+    <div class="left"><img src="data:image/png;base64,{{ qr_png }}" alt="QR"></div>
+    <div class="right">
+        <div class="tag">{{ asset.asset_tag }}</div>
+        <div class="name">{{ asset.name }}</div>
+        <div class="loc">{{ asset.location|default:"—" }}{% if asset.serial_number %} · SN {{ asset.serial_number }}{% endif %}</div>
+        <div class="barcode-slot">{{ barcode_svg|safe }}</div>
+    </div>
+</div>
+</body>
+</html>

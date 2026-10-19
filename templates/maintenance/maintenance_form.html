@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">{% if object %}Edit maintenance log{% else %}Schedule maintenance{% endif %}</h5></div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% include "partials/form_fields.html" %}
+                    <button class="btn btn-primary">Save</button>
+                    <a class="btn btn-outline-secondary" href="{% url 'maintenance-list' %}">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

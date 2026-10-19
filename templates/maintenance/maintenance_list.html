@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<form hx-get="{% url 'maintenance-list' %}" hx-target="#log-rows" hx-trigger="change from:#status, change from:#mtype, submit" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <select id="status" name="status" class="form-select">
+            <option value="">All statuses</option>
+            {% for value, label in statuses %}
+                <option value="{{ value }}" {% if value == status %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select id="mtype" name="type" class="form-select">
+            <option value="">All types</option>
+            {% for value, label in types %}
+                <option value="{{ value }}" {% if value == mtype %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <a class="btn btn-primary" href="{% url 'maintenance-create' %}">＋ Schedule maintenance</a>
+    </div>
+</form>
+
+<div id="log-rows">
+    {% include "maintenance/partials/log_rows.html" %}
+</div>
+{% endblock %}

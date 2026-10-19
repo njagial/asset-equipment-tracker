@@ -1,0 +1,17 @@
+:root {
+    --brand: #212529;
+}
+
+body { background: #f5f6f8; min-height: 100vh; }
+
+.navbar-brand { letter-spacing: .5px; }
+
+.badge.status-available      { background-color: #198754; }
+.badge.status-checked_out    { background-color: #0d6efd; }
+.badge.status-in_maintenance { background-color: #b58900; }
+.badge.status-retired        { background-color: #6c757d; }
+.badge.status-lost           { background-color: #dc3545; }
+
+.table-sm th { white-space: nowrap; }
+
+#reader video { border-radius: .25rem; }

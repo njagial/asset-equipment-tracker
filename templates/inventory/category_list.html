@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h5>Categories</h5>
+    <a class="btn btn-primary btn-sm" href="{% url 'category-create' %}">＋ New category</a>
+</div>
+<table class="table table-hover bg-white">
+    <thead><tr><th>Name</th><th>Description</th><th>Assets</th><th>Consumables</th><th></th></tr></thead>
+    <tbody>
+        {% for category in categories %}
+            <tr>
+                <td>{{ category.name }}</td>
+                <td>{{ category.description|default:"—" }}</td>
+                <td>{{ category.assets.count }}</td>
+                <td>{{ category.consumables.count }}</td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'category-update' category.pk %}">Edit</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-muted text-center py-3">No categories yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

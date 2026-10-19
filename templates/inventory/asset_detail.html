@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.asset_tag }} · {{ asset.name }}{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><span class="font-monospace me-2">{{ asset.asset_tag }}</span>{{ asset.name }}</h5>
+                <span class="badge status-{{ asset.status|lower }}">{{ asset.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Category</dt><dd class="col-sm-8">{{ asset.category.name }}</dd>
+                    <dt class="col-sm-4">Serial number</dt><dd class="col-sm-8 font-monospace">{{ asset.serial_number|default:"—" }}</dd>
+                    <dt class="col-sm-4">Model / Manufacturer</dt>
+                    <dd class="col-sm-8">{{ asset.model_number|default:"—" }} / {{ asset.manufacturer|default:"—" }}</dd>
+                    <dt class="col-sm-4">Location</dt><dd class="col-sm-8">{{ asset.location|default:"/" }}</dd>
+                    <dt class="col-sm-4">Assigned to</dt><dd class="col-sm-8">{{ asset.assigned_to_user|default:"—" }}</dd>
+                    <dt class="col-sm-4">Purchase date</dt><dd class="col-sm-8">{{ asset.purchase_date|default:"—" }}</dd>
+                    <dt class="col-sm-4">Warranty expiration</dt>
+                    <dd class="col-sm-8">{{ asset.warranty_expiration|default:"—" }}{% if asset.under_warranty %} <span class="badge text-bg-success">Under warranty</span>{% endif %}</dd>
+                    {% if asset.custom_fields %}
+                        <dt class="col-sm-4">Custom fields</dt>
+                        <dd class="col-sm-8"><pre class="bg-light p-2 rounded small mb-0">{{ asset.custom_fields|pprint }}</pre></dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {% if can_operate %}
+        <div class="card mb-4">
+            <div class="card-header">Operate</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'asset-check-out' asset.pk %}">
+                            {% csrf_token %}
+                            <h6 class="mb-2">↗ Check out</h6>
+                            <div class="mb-2">{{ checkout_form.assigned_to }}</div>
+                            <div class="mb-2">{{ checkout_form.notes }}</div>
+                            <button class="btn btn-success w-100">Check out</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'asset-check-in' asset.pk %}">
+                            {% csrf_token %}
+                            <h6 class="mb-2">↙ Check in</h6>
+                            <div class="mb-2">{{ checkin_form.new_location }}</div>
+                            <div class="mb-2">{{ checkin_form.notes }}</div>
+                            <button class="btn btn-primary w-100">Check in</button>
+                        </form>
+                    </div>
+                    <div class="col-12">
+                        <form method="post" action="{% url 'asset-set-status' asset.pk %}" class="d-flex gap-2 align-items-center">
+                            {% csrf_token %}
+                            {% for value, label in statuses %}
+                                {% if value != "CHECKED_OUT" %}
+                                    <button name="status" value="{{ value }}" class="btn btn-sm btn-outline-secondary" {% if asset.status == value %}disabled{% endif %}>{{ label }}</button>
+                                {% endif %}
+                            {% endfor %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">Recent transactions (audit trail)</div>
+            <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead><tr><th>When</th><th>Action</th><th>By</th><th>Assigned to</th><th>Notes</th></tr></thead>
+                <tbody>
+                    {% for txn in transactions %}
+                        <tr>
+                            <td class="small text-nowrap">{{ txn.timestamp|date:"Y-m-d H:i" }}</td>
+                            <td><span class="badge text-bg-info">{{ txn.get_action_display }}</span></td>
+                            <td>{{ txn.performed_by|default:"—" }}</td>
+                            <td>{{ txn.assigned_to|default:"—" }}</td>
+                            <td class="small">{{ txn.notes }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-muted text-center py-2">No transactions yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 text-center">
+            <div class="card-header">Labels</div>
+            <div class="card-body">
+                <img src="data:image/png;base64,{{ qr_png }}" width="140" class="mx-auto d-block" alt="QR">
+                <div class="my-3 barcode-slot">{{ barcode_svg|safe }}</div>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-dark" href="{% url 'asset-label' asset.pk %}" target="_blank">🖨 Print label (2×1 in)</a>
+                    <a class="btn btn-sm btn-outline-dark" href="{% url 'asset-barcode-svg' asset.pk %}">Code128 SVG</a>
+                    <a class="btn btn-sm btn-outline-dark" href="{% url 'asset-qr-png' asset.pk %}">QR PNG</a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Maintenance history</div>
+            <ul class="list-group list-group-flush">
+                {% for log in maintenance_logs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center small">
+                        <span>{{ log.title }}</span>
+                        <span class="badge text-bg-light">{{ log.status }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted small">No maintenance records.</li>
+                {% endfor %}
+            </ul>
+            <div class="card-body py-2 text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'maintenance-create' %}?asset={{ asset.pk }}">＋ Schedule maintenance</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'asset-update' asset.pk %}">✎ Edit</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+<tr>
+    <td>
+        {{ item.name }}
+        {% if item.is_below_threshold %}<span class="badge text-bg-danger">LOW</span>{% endif %}
+    </td>
+    <td class="font-monospace">{{ item.sku }}</td>
+    <td>{{ item.category.name }}</td>
+    <td class="fw-bold">{{ item.quantity_on_hand }}</td>
+    <td>{{ item.minimum_threshold }}</td>
+    <td>
+        <div class="btn-group btn-group-sm">
+            <form hx-post="{% url 'consumable-adjust' item.pk %}" hx-target="closest tr" hx-swap="outerHTML" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="delta" value="-1">
+                <button class="btn btn-outline-danger">−1</button>
+            </form>
+            <form hx-post="{% url 'consumable-adjust' item.pk %}" hx-target="closest tr" hx-swap="outerHTML" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="delta" value="1">
+                <button class="btn btn-outline-success">＋1</button>
+            </form>
+            <form hx-post="{% url 'consumable-adjust' item.pk %}" hx-target="closest tr" hx-swap="outerHTML" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="delta" value="10">
+                <button class="btn btn-outline-success">＋10</button>
+            </form>
+        </div>
+    </td>
+    <td>{{ item.location|default:"—" }}</td>
+    <td class="text-end">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'consumable-update' item.pk %}">Edit</a>
+    </td>
+</tr>

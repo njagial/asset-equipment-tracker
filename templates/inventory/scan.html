@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Scanner{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">📷 Camera scanner <span class="text-muted small">(html5-qrcode)</span></div>
+            <div class="card-body">
+                <div id="reader" class="border rounded bg-dark" style="min-height:280px"></div>
+                <div class="alert alert-secondary mt-3 small mb-0">
+                    Scan an asset's QR or Code128 label to check it in/out.
+                    Graceful fallback: type the tag below if no camera is available.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Manual lookup</div>
+            <div class="card-body">
+                <form hx-post="{% url 'scan-lookup' %}" hx-target="#scan-result" hx-swap="innerHTML" id="scan-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input name="code" id="scan-code" class="form-control font-monospace" placeholder="AST-2026-0012">
+                        <button class="btn btn-primary">Lookup</button>
+                    </div>
+                </form>
+                <hr>
+                <div id="scan-result">
+                    <p class="text-muted small">Awaiting a scan…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("scan-code");
+    const form = document.getElementById("scan-form");
+    let lastCode = null, lastAt = 0;
+
+    function submitCode(code) {
+        const now = Date.now();
+        if (code === lastCode && now - lastAt < 1500) return;  // debounce duplicate reads
+        lastCode = code; lastAt = now;
+        input.value = code;
+        htmx.trigger(form, "submit");
+    }
+
+    const config = { fps: 10, qrbox: { width: 260, height: 260 } };
+    const scanner = new Html5Qrcode("reader");
+    scanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => submitCode(String(decodedText).trim()),
+        () => {} /* frame errors are noisy; ignore */
+    ).catch(() => {
+        document.getElementById("reader").innerHTML =
+            '<div class="alert alert-warning m-3">Camera unavailable — use manual lookup.</div>';
+    });
+});
+</script>
+{% endblock %}

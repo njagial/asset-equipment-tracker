@@ -1,0 +1,13 @@
+<div class="table-responsive">
+    <table class="table table-hover table-sm align-middle bg-white">
+        <thead class="table-dark">
+            <tr><th>Name</th><th>SKU</th><th>Category</th><th>On hand</th><th>Min</th><th>Adjust stock</th><th>Location</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for item in page_obj %}{% include "inventory/partials/consumable_row.html" %}{% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No consumables found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include "partials/pagination.html" %}
