@@ -1,11 +1,15 @@
+import uuid
+
 import pytest
+from django.conf import settings
 from django.core import mail
 from django.db.utils import IntegrityError
 from django.test import Client
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.alerts.models import LowStockAlert
-from apps.alerts.tasks import sweep_low_stock
+from apps.alerts.tasks import notify_low_stock, sweep_low_stock
 from apps.inventory.models import Category, Consumable
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -104,3 +108,54 @@ def test_restock_queue_view(category):
     alert = LowStockAlert.unresolved_for(Consumable.objects.get(sku="USBC-DONGLE").pk)
     client.post(f"/alerts/restock/{alert.pk}/resolve/")
     assert LowStockAlert.unresolved_for(alert.consumable_id) is None
+
+
+def test_notify_low_stock_skips_missing_and_resolved_alerts(category):
+    consumable = _make_consumable(category, qty=10, threshold=5)
+    assert notify_low_stock(str(uuid.uuid4())) == "Alert missing or already resolved."
+
+    alert = LowStockAlert.objects.create(
+        consumable=consumable,
+        quantity_at_trigger=1,
+        threshold_at_trigger=2,
+        resolved_at=timezone.now(),
+    )
+    assert notify_low_stock(str(alert.pk)) == "Alert missing or already resolved."
+    assert len(mail.outbox) == 0
+
+
+def test_notify_low_stock_email_channel(category):
+    consumable = _make_consumable(category, qty=1, threshold=5)
+    alert = LowStockAlert.unresolved_for(consumable.pk)
+
+    mail.outbox.clear()  # the eager on_commit pipeline already mailed once at trigger
+    result = notify_low_stock(str(alert.pk))
+
+    assert "email" in result
+    assert len(mail.outbox) == 1
+    assert "LOW STOCK" in mail.outbox[0].subject
+    assert "USB-C dongle" in mail.outbox[0].subject
+    assert "USBC-DONGLE" in mail.outbox[0].body
+    assert settings.NOTIFY_EMAIL in mail.outbox[0].to
+
+
+def test_open_alert_tracks_lowest_quantity(category):
+    consumable = _make_consumable(category, qty=4, threshold=5)
+    alert = LowStockAlert.unresolved_for(consumable.pk)
+    assert alert.quantity_at_trigger == 4
+
+    consumable.quantity_on_hand = 1
+    consumable.save(update_fields=["quantity_on_hand", "updated_at"])
+
+    alert.refresh_from_db()
+    assert alert.quantity_at_trigger == 1
+    assert LowStockAlert.objects.count() == 1  # snapshot updated, no duplicate
+
+
+def test_alert_str_snapshot(category):
+    consumable = _make_consumable(category, qty=2, threshold=5)
+    alert = LowStockAlert.unresolved_for(consumable.pk)
+    alert_str = str(alert)
+    assert consumable.sku in alert_str
+    assert "qty 2" in alert_str
+    assert "thr 5" in alert_str
